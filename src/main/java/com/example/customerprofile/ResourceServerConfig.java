@@ -26,13 +26,8 @@ public class ResourceServerConfig {
 	SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 		return http
 				.authorizeHttpRequests(authorizeRequests -> {
-					authorizeRequests.antMatchers(HttpMethod.GET, "/").hasAuthority("SCOPE_message.read");
-					authorizeRequests.antMatchers(HttpMethod.GET, "/customer-profiles/**").hasAuthority("SCOPE_message.read");
-					authorizeRequests.antMatchers(HttpMethod.POST, "/").hasAuthority("SCOPE_message.write");
-					authorizeRequests.antMatchers(HttpMethod.POST, "**").hasAuthority("SCOPE_message.write");
-					authorizeRequests.antMatchers(HttpMethod.PATCH, "**").hasAuthority("SCOPE_message.write");
-					authorizeRequests.antMatchers(HttpMethod.DELETE, "**").hasAuthority("SCOPE_message.write");
-					authorizeRequests.anyRequest().denyAll();//?
+					authorizeRequests.antMatchers(HttpMethod.GET, "/api/customer-profiles/**").hasAuthority("SCOPE_message.read");
+					authorizeRequests.antMatchers(HttpMethod.POST, "/api/customer-profiles/**").hasAuthority("SCOPE_message.write");
 				})
 				.oauth2ResourceServer(OAuth2ResourceServerConfigurer::jwt)
 				.build();
