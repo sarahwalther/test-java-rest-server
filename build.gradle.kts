@@ -33,11 +33,11 @@ dependencies {
     // ResourceServerStart
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server")
-    // ResourceServerEnd
-
+    implementation("org.springframework.security:spring-security-config")
 
     // Test
-    testImplementation ("org.springframework.boot:spring-boot-starter-test")
+    testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testImplementation("org.springframework.security:spring-security-test")
 }
 
 tasks.withType<Test> {

@@ -1,5 +1,8 @@
 package com.example.customerprofile.api;
 
+import java.util.Optional;
+import java.util.stream.Stream;
+
 import com.example.customerprofile.domain.CustomerProfileChangeRequest;
 import com.example.customerprofile.domain.CustomerProfileCreateRequest;
 import com.example.customerprofile.domain.CustomerProfileResponse;
@@ -11,16 +14,23 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
-
-import java.util.Optional;
-import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(CustomerProfileController.class)
 class CustomerProfileControllerTest {
@@ -35,6 +45,7 @@ class CustomerProfileControllerTest {
     class Create {
 
         @Test
+        @WithMockUser( authorities = { "message.read", "message.write" } )
         void shouldDelegateToService() throws Exception {
 
             when(service.create(any()))
@@ -47,6 +58,7 @@ class CustomerProfileControllerTest {
                     "}";
 
             mockMvc.perform(post("/api/customer-profiles")
+                            .with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .accept(MediaType.APPLICATION_JSON)
                             .content(requestBody))
@@ -69,6 +81,7 @@ class CustomerProfileControllerTest {
             assertThat(profile.getEmail()).isEqualTo("joe.doe@test.org");
         }
 
+        @WithMockUser( authorities = { "message.read", "message.write" } )
         @Test
         void shouldReturnBadRequestWhenEmailIsNotProvided() throws Exception {
             var requestBody = "{" +
@@ -78,6 +91,7 @@ class CustomerProfileControllerTest {
 
             mockMvc.perform(post("/api/customer-profiles")
                             .contentType(MediaType.APPLICATION_JSON)
+                            .with(csrf())
                             .accept(MediaType.APPLICATION_JSON)
                             .content(requestBody))
                     .andExpect(status().isBadRequest());
@@ -90,6 +104,7 @@ class CustomerProfileControllerTest {
     class Update {
 
         @Test
+        @WithMockUser( authorities = { "message.read", "message.write" } )
         void shouldDelegateToService() throws Exception {
 
             when(service.change(any(), any()))
@@ -102,6 +117,7 @@ class CustomerProfileControllerTest {
 
             mockMvc.perform(patch("/api/customer-profiles/profile-id")
                             .contentType(MediaType.APPLICATION_JSON)
+                            .with(csrf())
                             .accept(MediaType.APPLICATION_JSON)
                             .content(requestBody))
                     .andExpect(status().isOk())
@@ -126,10 +142,11 @@ class CustomerProfileControllerTest {
     class Delete {
 
         @Test
+        @WithMockUser( authorities = { "message.read", "message.write" } )
         void shouldDelegateToService() throws Exception {
 
             mockMvc.perform(delete("/api/customer-profiles/profile-id")
-                            .accept(MediaType.APPLICATION_JSON))
+                            .accept(MediaType.APPLICATION_JSON).with(csrf()))
                     .andExpect(status().isOk());
 
             verify(service).delete(eq("profile-id"));
@@ -140,6 +157,7 @@ class CustomerProfileControllerTest {
     class Get {
 
         @Test
+        @WithMockUser( authorities = { "message.read", "message.write" } )
         void shouldDelegateToService() throws Exception {
 
             var id = "customer-profile-id";
@@ -147,7 +165,7 @@ class CustomerProfileControllerTest {
                     .thenReturn(Optional.of(new CustomerProfileResponse(id, "Joe", "Doe", "joe.doe@test.org")));
 
             mockMvc.perform(get("/api/customer-profiles/" + id)
-                            .accept(MediaType.APPLICATION_JSON))
+                            .accept(MediaType.APPLICATION_JSON).with(csrf()))
                     .andExpect(status().isOk())
                     .andExpect(content().json("{" +
                             "\"id\": \"customer-profile-id\"," +
@@ -160,13 +178,14 @@ class CustomerProfileControllerTest {
         }
 
         @Test
+        @WithMockUser( authorities = { "message.read", "message.write" } )
         void shouldReadAllDelegateToService() throws Exception {
 
             when(service.getAll())
                     .thenReturn(Stream.of(new CustomerProfileResponse("customer-profile-id", "Joe", "Doe", "joe.doe@test.org")));
 
             mockMvc.perform(get("/api/customer-profiles/")
-                            .accept(MediaType.APPLICATION_JSON))
+                            .accept(MediaType.APPLICATION_JSON).with(csrf()))
                     .andExpect(status().isOk())
                     .andExpect(content().json("[{" +
                             "\"id\": \"customer-profile-id\"," +
@@ -179,13 +198,14 @@ class CustomerProfileControllerTest {
         }
 
         @Test
+        @WithMockUser( authorities = { "message.read", "message.write" } )
         void shouldReturnNotFoundWhenNotExists() throws Exception {
 
             var id = "customer-profile-id";
             when(service.getById(any())).thenReturn(Optional.empty());
 
             mockMvc.perform(get("/api/customer-profiles/" + id)
-                            .accept(MediaType.APPLICATION_JSON))
+                            .accept(MediaType.APPLICATION_JSON).with(csrf()))
                     .andExpect(status().isNotFound())
                     .andExpect(content().string(""));
 
